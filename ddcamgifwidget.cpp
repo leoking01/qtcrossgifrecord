@@ -50,7 +50,7 @@ void DDCamGifWidget::initFrameless()
     pHelper->setTitleHeight(this->height()*0.1);  //设置窗体的标题栏高度
     pHelper->setWidgetMovable(true);  //设置窗体可移动
     pHelper->setWidgetResizable(true);  //设置窗体可缩放
-//    winAPIonTop();
+    //    winAPIonTop();
     //    pHelper->setRubberBandOnMove(true);  //设置橡皮筋效果-可移动
     //    pHelper->setRubberBandOnResize(true);  //设置橡皮筋效果-可缩放
 }
@@ -98,9 +98,11 @@ void DDCamGifWidget::addImage()
         fileName.append(".png");
         fileName.prepend("./tmp/");
         bool ok = img.save(fileName);
-//        qDebug()<<Q_FUNC_INFO<<fileName<<" ok ?"<<ok;
+        //        qDebug()<<Q_FUNC_INFO<<fileName<<" ok ?"<<ok;
     }
-    QImage *tmpImg = cool(60,&img);
+    int delta = 60;
+    delta =  0 ;//60;// 120;
+    QImage *tmpImg = cool(delta,&img);
     mAllPixMap.append(*tmpImg);
 }
 
@@ -117,6 +119,8 @@ void DDCamGifWidget::setButtonStyle(QPushButton *button, QString imgsrc, int Cut
                           .append("QPushButton::checked{border-image: url(%1) 0  0 0 %4 repeat  repeat;}")
                           .arg(imgsrc).arg(0).arg(PicWidth*1).arg(PicWidth*2));
 }
+
+#include<QStyleOption>
 void DDCamGifWidget::paintEvent(QPaintEvent *)
 {
     QStyleOption opt;
@@ -204,40 +208,50 @@ void DDCamGifWidget::on_gifPath_clicked()
 void DDCamGifWidget::winAPIonTop()
 {
 #ifdef Q_OS_WIN32
-        HWND hwnd = (HWND)this->winId();
-        DWORD dwstyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-        if (dwstyle & WS_EX_TOPMOST)
-        {
-            dwstyle &= ~WS_EX_TOPMOST;
-            SetWindowLong(hwnd, GWL_EXSTYLE, dwstyle);
-            SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOSIZE | SWP_SHOWWINDOW);
-        }
-        else
-        {
-            dwstyle |= WS_EX_TOPMOST;
-            SetWindowLong(hwnd, GWL_EXSTYLE, dwstyle);
-            SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOSIZE | SWP_SHOWWINDOW);
-        }
+    HWND hwnd = (HWND)this->winId();
+    DWORD dwstyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+    if (dwstyle & WS_EX_TOPMOST)
+    {
+        dwstyle &= ~WS_EX_TOPMOST;
+        SetWindowLong(hwnd, GWL_EXSTYLE, dwstyle);
+        SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOSIZE | SWP_SHOWWINDOW);
+    }
+    else
+    {
+        dwstyle |= WS_EX_TOPMOST;
+        SetWindowLong(hwnd, GWL_EXSTYLE, dwstyle);
+        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOREPOSITION | SWP_NOSIZE | SWP_SHOWWINDOW);
+    }
 #endif
 }
+
 QImage * DDCamGifWidget::cool(int delta, QImage * origin){
     QImage *newImage = new QImage(origin->width(), origin->height(), QImage::Format_ARGB32);
+
+   * newImage= origin->copy() ;
+//   * newImage= newImage->convertToFormat( QImage::Format::Format_Mono );
+//       * newImage= newImage->convertToFormat( QImage::Format::Format_MonoLSB );
+//    * newImage= newImage->convertToFormat( QImage::Format::Format_Indexed8 );
+  * newImage= newImage->convertToFormat( QImage::Format::Format_Indexed8 );
+    return newImage ;
 
     QColor oldColor;
     int r,g,b;
 
     for(int x=0; x<newImage->width(); x++){
         for(int y=0; y<newImage->height(); y++){
+            QRgb  colr_scr = origin->pixel(x,y) ;
             oldColor = QColor(origin->pixel(x,y));
 
             r = oldColor.red();
             g = oldColor.green();
-            b = oldColor.blue()+delta;
+            b =  oldColor.blue()+delta;
 
             //we check if the new value is between 0 and 255
             b = qBound(0, b, 255);
-
-            newImage->setPixel(x,y, qRgb(r,g,b));
+              newImage->setPixel(x,y, qRgb(r,g,b));
+            //  newImage->setPixel(x,y, qRgb(b,g,r));
+//            newImage->setPixel(x,y, colr_scr   );
         }
     }
 
